@@ -312,19 +312,20 @@ class PotencyPredictor:
 
 
 def main():
-    # Get data
+    # create an instance of the class
     predictor = PotencyPredictor()
+    # load data
     chembl_df = predictor.load_data()
-    # Encode data
+    # encode data, and split into train and test set
     predictor.get_train_and_test_data(chembl_df)
 
-    # Fit models
+    # fit models
     predictor.train(model_name="RF", verbose=True)
     predictor.train(model_name="SVM", verbose=True)
     predictor.train(model_name="MLP", verbose=True)
     predictor.train(model_name="LogReg", verbose=True)
 
-    # Plot roc curve
+    # plot roc curve
     predictor.plot_roc_curves_for_models()
 
 
