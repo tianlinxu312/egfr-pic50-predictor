@@ -1,16 +1,15 @@
-from pathlib import Path
 from warnings import filterwarnings
 import os
 import json
 import pandas as pd
 import numpy as np
-from sklearn import svm, metrics, clone
+from sklearn import svm, metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.model_selection import KFold, train_test_split
-from sklearn.metrics import auc, accuracy_score, recall_score
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, recall_score
+from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 import argparse
 from rdkit import Chem
@@ -269,7 +268,7 @@ class PotencyPredictor:
             # Calculate Area under the curve to display on the plot
             auc = roc_auc_score(test_y, test_prob)
             # Plot the computed values
-            plt.plot(fpr, tpr, label=(f"{model_name} AUC area = {auc:.2f}"))
+            plt.plot(fpr, tpr, label=f"{model_name} AUC area = {auc:.2f}")
 
         # Custom settings for the plot
         plt.plot([0, 1], [0, 1], "r--")
@@ -357,7 +356,6 @@ def main(args):
     predictor.get_train_and_test_data(chembl_df)
     # fit models
     model_names = args.model_names.split(",")
-    print(model_names)
     for model_name in model_names:
         predictor.train_and_eval(model_name=model_name, verbose=args.verbose, rf_n_estimators=args.rf_n_estimators,
                                  rf_criterion=args.rf_criterion, svm_kernel=args.svm_kernel, svm_gamma=args.svm_gamma,
