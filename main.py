@@ -73,7 +73,7 @@ class PotencyPredictor:
         self.test_x = None
         self.train_y = None
         self.test_y = None
-        self.models = []
+        self.models = {}
         self.performance_measures = []
 
     def load_data(self) -> pd.DataFrame:
@@ -165,22 +165,21 @@ class PotencyPredictor:
         """
         # Fit the model
         ml_model.fit(self.train_x, self.train_y)
+        self.models[model_name] = ml_model
 
-        # Calculate model performance results
-        accuracy, sens, spec, auc = self.model_performance(ml_model, model_name, verbose)
-        return accuracy, sens, spec, auc
-
-    def model_performance(self, ml_model, model_name: str,
-                          verbose: bool = True) -> tuple:
+    def inference(self, model_name: str, test_x: np.array,
+                  test_y: np.array, verbose: bool = True) -> tuple:
         """
-        Helper function to calculate model performance
+        Helper function for inference and reporting model performance
 
         Parameters
         ----------
-        ml_model: sklearn model object
-            The machine learning model to train.
         model_name: str
             Name of the model (for printing purposes)
+        test_x: np.array
+            Test set features
+        test_y: np.array
+            Test set labels
         verbose: bool
             Print performance measure (default = True)
         Returns
@@ -188,17 +187,22 @@ class PotencyPredictor:
         tuple:
             Accuracy, sensitivity, specificity, auc on test set.
         """
+        if model_name not in self.models.keys():
+            raise ValueError(f"Model {model_name} not trained yet. Please train first.")
+        else:
+            trained_model = self.models[model_name]
+
         # Prediction probability on test set
-        test_prob = ml_model.predict_proba(self.test_x)[:, 1]
+        test_prob = trained_model.predict_proba(test_x)[:, 1]
 
         # Prediction class on test set
-        test_pred = ml_model.predict(self.test_x)
+        test_pred = trained_model.predict(test_x)
 
         # Performance of model on test set
-        accuracy = accuracy_score(self.test_y, test_pred)
-        sens = recall_score(self.test_y, test_pred)
-        spec = recall_score(self.test_y, test_pred, pos_label=0)
-        auc = roc_auc_score(self.test_y, test_prob)
+        accuracy = accuracy_score(test_y, test_pred)
+        sens = recall_score(test_y, test_pred)
+        spec = recall_score(test_y, test_pred, pos_label=0)
+        auc = roc_auc_score(test_y, test_prob)
 
         if verbose:
             # Print performance results
@@ -223,19 +227,17 @@ class PotencyPredictor:
         """
 
         # Below for loop iterates through your models list
-        for model in self.models:
-            # Select the model
-            ml_model = model["model"]
+        for model_name, ml_model in self.models.items():
             # Prediction probability on test set
             test_prob = ml_model.predict_proba(self.test_x)[:, 1]
             # Prediction class on test set
-            test_pred = ml_model.predict(self.test_x)
+            # test_pred = ml_model.predict(self.test_x)
             # Compute False postive rate and True positive rate
             fpr, tpr, thresholds = metrics.roc_curve(self.test_y, test_prob)
             # Calculate Area under the curve to display on the plot
             auc = roc_auc_score(self.test_y, test_prob)
             # Plot the computed values
-            plt.plot(fpr, tpr, label=(f"{model['label']} AUC area = {auc:.2f}"))
+            plt.plot(fpr, tpr, label=(f"{model_name} AUC area = {auc:.2f}"))
 
         # Custom settings for the plot
         plt.plot([0, 1], [0, 1], "r--")
@@ -254,7 +256,7 @@ class PotencyPredictor:
               mlp_hidden_units: int = 256, mlp_iters: int = 3000,
               mlp_reg_strength: float = 0.01) -> None:
         """
-        Train a machine learning model on the training data and return the model.
+        Train a machine learning model on the training data and save the model.
 
         Parameters
         ----------
@@ -305,8 +307,10 @@ class PotencyPredictor:
             raise ValueError("Wrong model name. Please choose from {RF, SVM, MLP, LogReg}.")
 
         # fit model
-        acc, sens, spec, auc = self.model_training_and_validation(model, model_name, verbose=verbose)
-        self.models.append({"label": model_name, "model": model})
+        self.model_training_and_validation(model, model_name, verbose=verbose)
+        # get model performance
+        acc, sens, spec, auc = self.inference(model_name, self.test_x, self.test_y, verbose)
+        # save performance measures for reporting and plotting
         self.performance_measures.append({model_name: {'accuracy': acc, 'sensitivity': sens,
                                                        'specificity': spec, 'auc': auc}})
 
