@@ -172,7 +172,7 @@ class PotencyPredictor:
                   svm_gamma: float = 0.1,
                   logr_penalty: str or None = 'l2',
                   mlp_hidden_units: int = 256, mlp_iters: int = 3000,
-                  mlp_reg_strength: float = 0.01) -> tuple:
+                  mlp_reg_strength: float = 0.01) -> None:
         """
         Helper function for inference and reporting model performance
 
@@ -214,35 +214,38 @@ class PotencyPredictor:
                                 mlp_reg_strength=mlp_reg_strength)
 
         if test_x is None or test_y is None:
-            return self.performance_measures[model_name]
+            test_x = self.test_x
+            test_y = self.test_y
+
+        trained_model = self.models[model_name]
+        # Prediction probability on test set
+        test_prob = trained_model.predict_proba(test_x)[:, 1]
+
+        # Prediction class on test set
+        test_pred = trained_model.predict(test_x)
+
+        # Performance of model on test set
+        accuracy = accuracy_score(test_y, test_pred)
+        sens = recall_score(test_y, test_pred)
+        spec = recall_score(test_y, test_pred, pos_label=0)
+        auc = roc_auc_score(test_y, test_prob)
+
+        if verbose:
+            # Print performance results
+            # NBVAL_CHECK_OUTPUT
+            print('--------------------------------------')
+            print(f'{model_name} model test performance:')
+            print(f"Accuracy: {accuracy:.2}")
+            print(f"Sensitivity: {sens:.2f}")
+            print(f"Specificity: {spec:.2f}")
+            print(f"AUC: {auc:.2f}")
+
+        if test_x is None or test_y is None:
+            self.performance_measures[model_name+" new_xy"] = {'accuracy': accuracy, 'sensitivity': sens,
+                                                               'specificity': spec, 'auc': auc}
         else:
-            trained_model = self.models[model_name]
-            # Prediction probability on test set
-            test_prob = trained_model.predict_proba(test_x)[:, 1]
-
-            # Prediction class on test set
-            test_pred = trained_model.predict(test_x)
-
-            # Performance of model on test set
-            accuracy = accuracy_score(test_y, test_pred)
-            sens = recall_score(test_y, test_pred)
-            spec = recall_score(test_y, test_pred, pos_label=0)
-            auc = roc_auc_score(test_y, test_prob)
-
-            if verbose:
-                # Print performance results
-                # NBVAL_CHECK_OUTPUT
-                print('--------------------------------------')
-                print(f'{model_name} model test performance:')
-                print(f"Accuracy: {accuracy:.2}")
-                print(f"Sensitivity: {sens:.2f}")
-                print(f"Specificity: {spec:.2f}")
-                print(f"AUC: {auc:.2f}")
-
-            self.performance_measures[model_name+" new_data"] = {'accuracy': accuracy, 'sensitivity': sens,
-                                                                 'specificity': spec, 'auc': auc}
-
-            return accuracy, sens, spec, auc
+            self.performance_measures[model_name] = {'accuracy': accuracy, 'sensitivity': sens,
+                                                     'specificity': spec, 'auc': auc}
 
     def plot_roc_curves_for_models(self, test_x: np.array = None, test_y: np.array = None) -> plt.figure:
         """
@@ -340,10 +343,7 @@ class PotencyPredictor:
         # fit model
         self._model_training(model, model_name)
         # get model performance
-        acc, sens, spec, auc = self.inference(model_name, self.test_x, self.test_y, verbose)
-        # save performance measures for reporting and plotting
-        self.performance_measures[model_name] = {'accuracy': acc, 'sensitivity': sens,
-                                                 'specificity': spec, 'auc': auc}
+        self.inference(model_name, self.test_x, self.test_y, verbose)
 
 
 def main(args):
