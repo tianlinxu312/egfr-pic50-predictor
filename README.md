@@ -21,7 +21,7 @@ Install packages in the [requirements.txt](./requirements.txt):
 pip install -r requirements.txt
 ```
 
-# Run it
+## Run it
 
 Run the code, for example 
 
@@ -30,6 +30,10 @@ python3 main.py -dp "path/to/data" -pic 0.8 -em 'maccs' -nb 2048 -mns "RF, MLP" 
 ```
 
 More parameter setting are avalable, see [arguments and docstrings in the PotencyPredictor class](./main.py).
+
+## Run it in a notebook
+
+Alternatively, you can run it in a notebook [here](https://colab.research.google.com/drive/1ecbgm3b8DAWgvtUZUxgnBuE0K9Fqcvw0?usp=sharing). 
 
 ## Evaluate 
 The performance of the models can be evaluated on accuracy, sensitivity, specificity as well as area under curve (AUC) metrics. 
