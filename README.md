@@ -29,7 +29,7 @@ Run the code, for example
 python3 main.py -dp "path/to/data" -pic 0.8 -em 'maccs' -nb 2048 -mns "RF, MLP" -vb True 
 ```
 
-More parameter setting are avalable, see [arguments and docstrings in the PotencyPredictor class](./main.py)
+More parameter setting are avalable, see [arguments and docstrings in the PotencyPredictor class](./main.py).
 
 ## Evaluate 
 The performance of the models can be evaluated on accuracy, sensitivity, specificity as well as area under curve (AUC) metrics. 
